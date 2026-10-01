@@ -46,7 +46,7 @@ try:
                         content_type = "text/css"
 
                     elif ".js" in path_str:
-                        content_type = "text/javsascript"
+                        content_type = "text/javascript"
 
                     else:
                         content_type = "text/html"
