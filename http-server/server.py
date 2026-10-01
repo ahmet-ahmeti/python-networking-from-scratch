@@ -34,12 +34,23 @@ try:
                     method, path, version = line.split(b" ")
 
                     allowed_paths = {
+                        "/index.html" : "index.html",
                         "/" : "index.html",
-                        "/style.css" : "style.css"
+                        "/style.css" : "style.css",
+                        "/script.js" : "script.js"
                     }
 
                     path_str = path.decode()
 
+                    if ".css" in path_str:
+                        content_type = "text/css"
+
+                    elif ".js" in path_str:
+                        content_type = "text/javsascript"
+
+                    else:
+                        content_type = "text/html"
+                    
                     if path_str in allowed_paths:
                         filename = allowed_paths[path_str]
 
@@ -52,16 +63,19 @@ try:
                         body = "<h1>404 Not Found</h1>"
 
                     body_bytes = body.encode()
-
-                    response = f"{status_line}\r\nContent-Type: text/html\r\nContent-Length: {len(body_bytes)}\r\n\r\n"
+                    
+                    response = f"{status_line}\r\nContent-Type: {content_type}\r\nContent-Length: {len(body_bytes)}\r\n\r\n"
                     response_bytes = response.encode()
 
                     sock.sendall(response_bytes + body_bytes)
+                    
                     all_socks.remove(sock)
                     sock.close()
+
                 except ConnectionError:
                     all_socks.remove(sock)
                     sock.close()
                     pass
+                
 finally:
     server_sock.close()

@@ -1,6 +1,7 @@
 import socket
 import struct
 import threading
+import json
  
 try:
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -36,12 +37,41 @@ try:
             while True:
                 length_struct = recvall(sock, 4)
                 length = struct.unpack("!I", length_struct)[0]
+
                 data = recvall(sock, length)
- 
-                if data == b"quit":
-                    break
- 
-                broadcast(length_struct + data, sock)
+                data = data.decode()
+                data = json.loads(data)
+
+                if data["type"] == "join":
+                    payload = {
+                        "type" : "chat",
+                        "user" : "Server",
+                        "text" : f"{data["user"]} has joined the chat"
+                    }
+                    payload_bytes = json.dumps(payload).encode()
+                    header = struct.pack("!I", len(payload_bytes))
+
+                    broadcast(header + payload_bytes, sock)
+
+                elif data["type"] == "chat":
+
+                    if data["text"] == "quit":
+                        payload = {
+                            "type" : "chat",
+                            "user" : "Server",
+                            "text" : f"{data["user"]} has left the chat"
+                        }
+                        payload_bytes = json.dumps(payload).encode()
+                        header = struct.pack("!I", len(payload_bytes))
+
+                        broadcast(header + payload_bytes, sock)
+                        return
+                    else:
+                        payload_bytes = json.dumps(data).encode()
+                        header = struct.pack("!I", len(payload_bytes))
+
+                        broadcast(header + payload_bytes, sock)
+
         finally:
             with lock:
                 client_sockets.remove(sock)
